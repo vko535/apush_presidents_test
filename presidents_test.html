@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Presidents Test (Sem 2)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h2 { text-align: center; margin-bottom: 8px; }
+
+    .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .meta { text-align: right; }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    button {
+      padding: 8px 12px;
+      border: 1px solid #222;
+      background: #fff;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button:hover { filter: brightness(0.97); }
+
+    .score { font-weight: bold; margin-left: 6px; }
+    .muted { color: #666; font-size: 12px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid black; padding: 8px; text-align: center; vertical-align: middle; }
+    th { background-color: #e6e6e6; }
+
+    .cellWrap { display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
+    input {
+      width: 95%;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      text-align: center;
+      background: transparent;
+    }
+
+    /* feedback styles */
+    .correct input { outline: 2px solid #1a8f3a; border-radius: 4px; }
+    .incorrect input { outline: 2px solid #c22; border-radius: 4px; }
+    .correction { color: #c22; font-size: 13px; white-space: nowrap; }
+
+    @media print {
+      .controls, .score { display: none; }
+      input { outline: none !important; }
+      .correction { display: none; }
+    }
+
+    /* ---------- Dark Mode ---------- */
+    body.dark {
+      background: #121212;
+      color: #eaeaea;
+    }
+    body.dark table { border-color: #555; }
+    body.dark th { background-color: #1f1f1f; }
+    body.dark td { border-color: #555; }
+    body.dark input { color: #eaeaea; }
+    body.dark button { background: #1f1f1f; color: #eaeaea; border-color: #555; }
+    body.dark .muted { color: #aaa; }
+    body.dark .correct input { outline: 2px solid #3bd671; }
+    body.dark .incorrect input { outline: 2px solid #ff5c5c; }
+    body.dark .correction { color: #ff7b7b; }
+  </style>
+</head>
+<body>
+
+  <div class="top">
+    <div class="controls">
+      <button id="showBtn" type="button">Show Answers</button>
+      <button id="retryBtn" type="button">Try Again</button>
+      <button id="darkBtn" type="button">Dark Mode</button>
+      <span class="score" id="scoreText">Score: 0 / 88</span>
+      <span class="muted">(88 = 22 rows × 4 cells)</span>
+    </div>
+
+    <div class="meta">
+      Name ____________________ <br>
+      Date ____________________ <br>
+      Period __________________
+    </div>
+  </div>
+
+  <h2>Presidents Test (Sem 2)</h2>
+
+  <table id="presTable">
+    <tr>
+      <th>#</th>
+      <th>First and Last Name</th>
+      <th>Presidency Start Date</th>
+      <th>Presidency End Date</th>
+      <th>Political Party</th>
+    </tr>
+  </table>
+
+<script>
+  // ========= KEY (strict accepted words list, as you requested) =========
+  // display = what shows when answers are revealed (nice capitalization)
+  const KEY = {
+    26: {
+      name:  { accepted: ["theodore roosevelt"], display: "Theodore Roosevelt" },
+      start: { accepted: ["1901"], display: "1901" },
+      end:   { accepted: ["1909"], display: "1909" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    27: {
+      name:  { accepted: ["william taft"], display: "William Taft" },
+      start: { accepted: ["1909"], display: "1909" },
+      end:   { accepted: ["1913"], display: "1913" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    28: {
+      name:  { accepted: ["woodrow wilson"], display: "Woodrow Wilson" },
+      start: { accepted: ["1913"], display: "1913" },
+      end:   { accepted: ["1921"], display: "1921" },
+      party: { accepted: ["democrat"], display: "Democrat" } // NOT "democratic"
+    },
+    29: {
+      name:  { accepted: ["warren harding"], display: "Warren Harding" },
+      start: { accepted: ["1921"], display: "1921" },
+      end:   { accepted: ["1923"], display: "1923" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    30: {
+      name:  { accepted: ["calvin coolidge"], display: "Calvin Coolidge" },
+      start: { accepted: ["1923"], display: "1923" },
+      end:   { accepted: ["1929"], display: "1929" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    31: {
+      name:  { accepted: ["herbert hoover"], display: "Herbert Hoover" },
+      start: { accepted: ["1929"], display: "1929" },
+      end:   { accepted: ["1933"], display: "1933" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    32: {
+      name:  { accepted: ["franklin roosevelt"], display: "Franklin Roosevelt" },
+      start: { accepted: ["1933"], display: "1933" },
+      end:   { accepted: ["1945"], display: "1945" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    33: {
+      name:  { accepted: ["harry truman"], display: "Harry Truman" },
+      start: { accepted: ["1945"], display: "1945" },
+      end:   { accepted: ["1953"], display: "1953" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    34: {
+      name:  { accepted: ["dwight eisenhower"], display: "Dwight Eisenhower" },
+      start: { accepted: ["1953"], display: "1953" },
+      end:   { accepted: ["1961"], display: "1961" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    35: {
+      name:  { accepted: ["john kennedy"], display: "John Kennedy" },
+      start: { accepted: ["1961"], display: "1961" },
+      end:   { accepted: ["1963"], display: "1963" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    36: {
+      name:  { accepted: ["lyndon johnson"], display: "Lyndon Johnson" },
+      start: { accepted: ["1963"], display: "1963" },
+      end:   { accepted: ["1969"], display: "1969" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    37: {
+      name:  { accepted: ["richard nixon"], display: "Richard Nixon" },
+      start: { accepted: ["1969"], display: "1969" },
+      end:   { accepted: ["1974"], display: "1974" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    38: {
+      name:  { accepted: ["gerald ford"], display: "Gerald Ford" },
+      start: { accepted: ["1974"], display: "1974" },
+      end:   { accepted: ["1977"], display: "1977" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    39: {
+      name:  { accepted: ["jimmy carter"], display: "Jimmy Carter" },
+      start: { accepted: ["1977"], display: "1977" },
+      end:   { accepted: ["1981"], display: "1981" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    40: {
+      name:  { accepted: ["ronald reagan"], display: "Ronald Reagan" },
+      start: { accepted: ["1981"], display: "1981" },
+      end:   { accepted: ["1989"], display: "1989" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    41: {
+      name:  { accepted: ["george h. w. bush"], display: "George H.W. Bush" },
+      start: { accepted: ["1989"], display: "1989" },
+      end:   { accepted: ["1993"], display: "1993" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    42: {
+      name:  { accepted: ["bill clinton", "william clinton", "bill or william clinton"], display: "Bill or William Clinton" },
+      start: { accepted: ["1993"], display: "1993" },
+      end:   { accepted: ["2001"], display: "2001" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    43: {
+      name:  { accepted: ["george w. bush"], display: "George W. Bush" },
+      start: { accepted: ["2001"], display: "2001" },
+      end:   { accepted: ["2009"], display: "2009" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    44: {
+      name:  { accepted: ["barack obama"], display: "Barack Obama" },
+      start: { accepted: ["2009"], display: "2009" },
+      end:   { accepted: ["2017"], display: "2017" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    45: {
+      name:  { accepted: ["donald trump"], display: "Donald Trump" },
+      start: { accepted: ["2017"], display: "2017" },
+      end:   { accepted: ["2021"], display: "2021" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+    46: {
+      name:  { accepted: ["joe biden", "joseph biden", "joe or joseph biden"], display: "Joe or Joseph Biden" },
+      start: { accepted: ["2021"], display: "2021" },
+      end:   { accepted: ["2025"], display: "2025" },
+      party: { accepted: ["democrat"], display: "Democrat" }
+    },
+    47: {
+      name:  { accepted: ["donald trump"], display: "Donald Trump" },
+      start: { accepted: ["2025"], display: "2025" },
+      end:   { accepted: ["—", "-", ""], display: "—" },
+      party: { accepted: ["republican"], display: "Republican" }
+    },
+  };
+
+  const ROWS = Object.keys(KEY).map(n => Number(n)); // 26..47
+  const FIELDS = ["name", "start", "end", "party"];
+
+  // ---------- Helpers ----------
+  // Case-insensitive; also removes punctuation so dots don't matter.
+  function normalizeText(s) {
+    return (s ?? "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[.\u2019'‘’,"()]/g, "")
+      .replace(/\s+/g, " ");
+  }
+
+  function isMatch(user, acceptedList) {
+    const u = normalizeText(user);
+    return acceptedList.some(a => normalizeText(a) === u);
+  }
+
+  function clearFeedback(td) {
+    td.classList.remove("correct", "incorrect");
+    const corr = td.querySelector(".correction");
+    if (corr) corr.remove();
+  }
+
+  function markCorrect(td) {
+    td.classList.remove("incorrect");
+    td.classList.add("correct");
+  }
+
+  function markIncorrect(td, correctDisplay) {
+    td.classList.remove("correct");
+    td.classList.add("incorrect");
+
+    let span = td.querySelector(".correction");
+    if (!span) {
+      span = document.createElement("span");
+      span.className = "correction";
+      td.querySelector(".cellWrap").appendChild(span);
+    }
+    span.textContent = "→ " + correctDisplay;
+  }
+
+  // ---------- Build Table ----------
+  const table = document.getElementById("presTable");
+
+  function makeCell(rowNum, field, rIdx, cIdx) {
+    const td = document.createElement("td");
+    td.dataset.row = rowNum;
+    td.dataset.field = field;
+
+    const wrap = document.createElement("div");
+    wrap.className = "cellWrap";
+
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+
+    // for keyboard navigation
+    inp.dataset.r = rIdx;
+    inp.dataset.c = cIdx;
+
+    wrap.appendChild(inp);
+    td.appendChild(wrap);
+    return td;
+  }
+
+  ROWS.forEach((n, rIdx) => {
+    const tr = document.createElement("tr");
+
+    const tdNum = document.createElement("td");
+    tdNum.textContent = n;
+    tr.appendChild(tdNum);
+
+    tr.appendChild(makeCell(n, "name",  rIdx, 0));
+    tr.appendChild(makeCell(n, "start", rIdx, 1));
+    tr.appendChild(makeCell(n, "end",   rIdx, 2));
+    tr.appendChild(makeCell(n, "party", rIdx, 3));
+
+    table.appendChild(tr);
+  });
+
+  // ---------- Show Answers / Try Again / Score ----------
+  const scoreText = document.getElementById("scoreText");
+  const showBtn = document.getElementById("showBtn");
+  const retryBtn = document.getElementById("retryBtn");
+  let answersShown = false;
+
+  function grade(fillBlanksWithAnswers) {
+    let correct = 0;
+    const total = ROWS.length * 4;
+
+    ROWS.forEach(n => {
+      const entry = KEY[n];
+
+      FIELDS.forEach(field => {
+        const td = table.querySelector(`td[data-row="${n}"][data-field="${field}"]`);
+        const input = td.querySelector("input");
+        const userVal = input.value;
+
+        clearFeedback(td);
+
+        const ok = isMatch(userVal, entry[field].accepted);
+        if (ok) {
+          correct += 1;
+          markCorrect(td);
+        } else {
+          markIncorrect(td, entry[field].display);
+
+          if (fillBlanksWithAnswers && normalizeText(userVal) === "") {
+            input.value = entry[field].display; // pretty capitalization when showing answers
+          }
+        }
+      });
+    });
+
+    scoreText.textContent = `Score: ${correct} / ${total}`;
+  }
+
+  showBtn.addEventListener("click", () => {
+    answersShown = !answersShown;
+    showBtn.textContent = answersShown ? "Hide Answers" : "Show Answers";
+
+    if (answersShown) {
+      grade(true); // grade + fill blanks
+    } else {
+      // hide: remove outlines + red corrections, keep what you typed
+      table.querySelectorAll('td[data-row][data-field]').forEach(td => clearFeedback(td));
+      scoreText.textContent = `Score: 0 / ${ROWS.length * 4}`;
+    }
+  });
+
+  retryBtn.addEventListener("click", () => {
+    answersShown = false;
+    showBtn.textContent = "Show Answers";
+    table.querySelectorAll("input").forEach(i => i.value = "");
+    table.querySelectorAll('td[data-row][data-field]').forEach(td => clearFeedback(td));
+    scoreText.textContent = `Score: 0 / ${ROWS.length * 4}`;
+  });
+
+  // ---------- Keyboard Navigation ----------
+  function focusCell(r, c) {
+    const next = table.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+    if (next) next.focus();
+  }
+
+  // Enter -> move DOWN (same column)
+  // Arrow keys -> move in grid
+  table.addEventListener("keydown", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+
+    const r = Number(t.dataset.r);
+    const c = Number(t.dataset.c);
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      focusCell(r + 1, c);
+      return;
+    }
+    if (e.key === "ArrowDown")  { e.preventDefault(); focusCell(r + 1, c); return; }
+    if (e.key === "ArrowUp")    { e.preventDefault(); focusCell(r - 1, c); return; }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); focusCell(r, c - 1); return; }
+    if (e.key === "ArrowRight") { e.preventDefault(); focusCell(r, c + 1); return; }
+  });
+
+  // ---------- Dark Mode ----------
+  const darkBtn = document.getElementById("darkBtn");
+
+  if (localStorage.getItem("darkMode") === "on") {
+    document.body.classList.add("dark");
+    darkBtn.textContent = "Light Mode";
+  }
+
+  darkBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    const isDark = document.body.classList.contains("dark");
+    darkBtn.textContent = isDark ? "Light Mode" : "Dark Mode";
+    localStorage.setItem("darkMode", isDark ? "on" : "off");
+  });
+</script>
+
+</body>
+</html>
